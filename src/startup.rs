@@ -39,7 +39,7 @@ impl Application {
             listener,
             connection_pool,
             email_client,
-            configuration.application.base_url
+            configuration.application.base_url,
         )?;
 
         return Ok(Self { port, server });

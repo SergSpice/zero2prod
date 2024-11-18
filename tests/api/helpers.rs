@@ -2,10 +2,11 @@ use once_cell::sync::Lazy;
 use sqlx::{Connection, Executor, PgConnection, PgPool};
 use uuid::Uuid;
 use wiremock::MockServer;
-use zero2prod::{configuration::{
-    get_configuration,
-    DatabaseSettings,
-}, startup::{get_connection_pool, Application}, telemetry::{get_subscriber, init_subscriber}};
+use zero2prod::{
+    configuration::{get_configuration, DatabaseSettings},
+    startup::{get_connection_pool, Application},
+    telemetry::{get_subscriber, init_subscriber},
+};
 
 static TRACING: Lazy<()> = Lazy::new(|| {
     let default_filter_level = "info".to_string();
@@ -56,16 +57,22 @@ impl TestApp {
             let mut confirmation_link = reqwest::Url::parse(&raw_link).unwrap();
             assert_eq!(confirmation_link.host_str().unwrap(), "127.0.0.1");
             confirmation_link.set_port(Some(self.port)).unwrap();
-            confirmation_link
+            return confirmation_link;
         };
 
         let html = get_link(&body["HtmlBody"].as_str().unwrap());
         let plain_text = get_link(&body["TextBody"].as_str().unwrap());
 
-        return ConfirmationLinks {
-            html,
-            plain_text,
-        };
+        return ConfirmationLinks { html, plain_text };
+    }
+
+    pub async fn post_newsletters(&self, body: serde_json::Value) -> reqwest::Response {
+        return reqwest::Client::new()
+            .post(&format!("{}/newsletters", &self.address))
+            .json(&body)
+            .send()
+            .await
+            .expect("Failed to execute request.");
     }
 }
 
